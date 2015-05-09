@@ -1,6 +1,7 @@
 package messages;
 
 import javafx.beans.property.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,15 @@ public class Message {
         this.recipients = new ArrayList<>();
     }
 
+    public Message(MessageImportance importanceOfMessage,LocalDateTime receivedAt,Boolean readStatus,MessageStakeholder sender,String subject){
+    	this();
+    	this.importanceOfMessage.set(importanceOfMessage);
+    	this.subject.set(subject);
+    	this.readStatus.set(readStatus);
+    	this.sender.set(sender);
+    	this.receivedAt.set(receivedAt);
+    }
+    
     public void setId(String id) {
         this.id = id;
     }
