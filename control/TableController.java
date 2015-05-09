@@ -1,9 +1,19 @@
 package control;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -13,15 +23,22 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import messages.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
-public class TableController implements Initializable{
+public class TableController implements Initializable {
 
     private ObservableList<Message> table_Content;
-    
+
     @FXML
     private Label labelContent;
 
@@ -61,12 +78,19 @@ public class TableController implements Initializable{
     @FXML
     private Label labelFrom;
 
+    @FXML
+    private TextArea area;
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         table_Content = FXCollections.observableArrayList();
+        table.getSelectionModel().selectedItemProperty().addListener((ObservableValue, oldValue, newValue) -> refresh(newValue));
+        area.setWrapText(true);
+        area.setEditable(false);
         initTable();
+        fillList();
     }
-    
+
     private void initTable() {
 
         table_Read.setCellValueFactory(new PropertyValueFactory<>("readStatus"));
@@ -93,7 +117,7 @@ public class TableController implements Initializable{
             }
         });
         table_Sender.setCellValueFactory(new PropertyValueFactory<>("sender"));
-        table_Sender.setCellFactory(cellData -> new TableCell<Message, MessageStakeholder>() {
+        table_Sender.setCellFactory(column -> new TableCell<Message, MessageStakeholder>() {
             @Override
             protected void updateItem(MessageStakeholder sender, boolean empty) {
                 super.updateItem(sender, empty);
@@ -108,7 +132,7 @@ public class TableController implements Initializable{
         });
         table_Subject.setCellValueFactory(new PropertyValueFactory<>("subject"));
         table_Rec.setCellValueFactory(new PropertyValueFactory<>("receivedAt"));
-        table_Rec.setCellFactory(cellData -> new TableCell<Message, LocalDateTime>() {
+        table_Rec.setCellFactory(column -> new TableCell<Message, LocalDateTime>() {
             @Override
             protected void updateItem(LocalDateTime receivedDate, boolean empty) {
                 super.updateItem(receivedDate, empty);
@@ -148,17 +172,80 @@ public class TableController implements Initializable{
                 }
             }
         });
-        
-        fillList();
     }
-    
-    private void fillList() {
-        Message m1 = new Message(MessageImportance.LOW, LocalDateTime.now(), true, new MessageStakeholder("Atha", "atha@gmail.com"), "Bestellung");
-        table_Content.add(m1);
-        table.setItems(table_Content);
 
-        Message m2 = new Message(MessageImportance.HIGH, LocalDateTime.now(), false, new MessageStakeholder("johann", "Johann@gmail.com"), "Steam");
-        table_Content.add(m2);
+    private void fillList() {
+        File file = new File("src/messages/examples");
+        for (File each : file.listFiles()) {
+            table_Content.add(readMessage(each));
+        }
         table.setItems(table_Content);
+    }
+
+    private Message readMessage(File file) {
+        try {
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(file);
+
+            Element element = (Element) doc.getFirstChild();
+
+            String id = element.getElementsByTagName("id").item(0).getTextContent();
+            MessageImportance importance = MessageImportance.valueOf(element.getElementsByTagName("importanceOfMessage").item(0).getTextContent());
+            boolean read = Boolean.parseBoolean(element.getElementsByTagName("readStatus").item(0).getTextContent());
+            LocalDateTime date = LocalDateTime.parse(element.getElementsByTagName("receivedAt").item(0).getTextContent());
+            ArrayList<MessageStakeholder> recipients = new ArrayList<>();
+            NodeList list = element.getElementsByTagName("recipients");
+            for (int i = 0; i < list.getLength(); ++i) {
+                Node recipient = list.item(i);
+                Element temp = (Element) recipient;
+                recipients.add(new MessageStakeholder(
+                        temp.getElementsByTagName("name").item(0).getTextContent(),
+                        temp.getElementsByTagName("mailAddress").item(0).getTextContent()));
+            }
+            list = element.getElementsByTagName("sender");
+            Element eSender = (Element) list.item(0);
+            MessageStakeholder sender = new MessageStakeholder(
+                    eSender.getElementsByTagName("name").item(0).getTextContent(),
+                    eSender.getElementsByTagName("mailAddress").item(0).getTextContent());
+            String subject = element.getElementsByTagName("subject").item(0).getTextContent();
+            String text = element.getElementsByTagName("text").item(0).getTextContent();
+
+            Message message = new Message(importance, date, read, sender, subject);
+            message.setRecipients(recipients);
+            message.setText(text);
+            message.setId(id);
+            return message;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private void refresh(Message message) {
+        labelContent.setText(message.getSubject());
+        labelDate.setText(message.getReceivedAt().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+        labelFrom.setText(message.getSender().getName() + " (" + message.getSender().getMailAddress() + ")");
+        StringBuilder to = new StringBuilder(message.getRecipients().get(0).getMailAddress());
+        for (int i = 0; i < message.getRecipients().size(); ++i) {
+            to.append(", ").append(message.getRecipients().get(i).getMailAddress());
+        }
+        labelTo.setText(to.toString());
+        area.setText(message.getText());
+        message.setReadStatus(true);
+        saveRead(message);
+    }
+
+    private void saveRead(Message message) {
+        try {
+            Path path = Paths.get("src/messages/examples/" + message.getId() + ".xml");
+            Charset charset = StandardCharsets.UTF_8;
+            
+            String content = new String(Files.readAllBytes(path), charset);
+            content = content.replaceAll("<readStatus>false</readStatus>", "<readStatus>true</readStatus>");
+            Files.write(path, content.getBytes(charset));
+        } catch (IOException ex) {
+            Logger.getLogger(TableController.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }
