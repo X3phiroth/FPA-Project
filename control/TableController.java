@@ -19,7 +19,9 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -27,7 +29,6 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import messages.*;
 import org.w3c.dom.Document;
@@ -38,59 +39,50 @@ import org.w3c.dom.NodeList;
 public class TableController implements Initializable {
 
     private ObservableList<Message> table_Content;
-
     @FXML
-    private Label labelContent;
-
+    private TableView<Message> table;
+    @FXML
+    private TableColumn<Message, MessageImportance> table_Prio;
     @FXML
     private TableColumn<Message, LocalDateTime> table_Rec;
-
-    @FXML
-    private Button allenAntworten;
-
-    @FXML
-    private TableColumn<Message, Boolean> table_Read;
-
-    @FXML
-    private Button forward;
-
     @FXML
     private TableColumn<Message, MessageStakeholder> table_Sender;
-
+    @FXML
+    private TableColumn<Message, Boolean> table_Read;
     @FXML
     private TableColumn<Message, String> table_Subject;
 
     @FXML
-    private Label labelTo;
-
-    @FXML
-    private TableColumn<Message, MessageImportance> table_Prio;
-
-    @FXML
     private Button reply;
+    @FXML
+    private Button replyAll;
+    @FXML
+    private Button forward;
 
     @FXML
-    private Label labelDate;
-
-    @FXML
-    private TableView<Message> table;
-
+    private Label labelTo;
     @FXML
     private Label labelFrom;
-
+    @FXML
+    private Label labelDate;
+    @FXML
+    private Label labelContent;
     @FXML
     private TextArea area;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         table_Content = FXCollections.observableArrayList();
-        table.getSelectionModel().selectedItemProperty().addListener((ObservableValue, oldValue, newValue) -> refresh(newValue));
-        area.setWrapText(true);
-        area.setEditable(false);
+        table.getSelectionModel().selectedItemProperty().addListener((ObservableValue, oldValue, newValue) -> load(newValue));
         initTable();
-        fillList();
+        fillTable("src/messages/examples");
+        modifyTextArea();
+        setContextMenu();
     }
 
+    /**
+     * Initializes the TableView
+     */
     private void initTable() {
 
         table_Read.setCellValueFactory(new PropertyValueFactory<>("readStatus"));
@@ -140,7 +132,7 @@ public class TableController implements Initializable {
                     setText(null);
                     setStyle("");
                 } else {
-                    DateTimeFormatter f1 = DateTimeFormatter.ofPattern("dd MM yyyy HH:mm");
+                    DateTimeFormatter f1 = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
                     setText(f1.format(receivedDate));
                 }
             }
@@ -174,19 +166,29 @@ public class TableController implements Initializable {
         });
     }
 
-    private void fillList() {
-        File file = new File("src/messages/examples");
+    /**
+     * Fills the table by the xml files within the passed path.
+     *
+     * @param path the path containing the xml files.
+     */
+    private void fillTable(String path) {
+        File file = new File(path);
         for (File each : file.listFiles()) {
             table_Content.add(readMessage(each));
         }
         table.setItems(table_Content);
     }
 
+    /**
+     * Opens the xml file, reads all the information and returns a new message
+     * object.
+     *
+     * @param file The file to read
+     * @return The created message
+     */
     private Message readMessage(File file) {
         try {
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(file);
+            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file);
 
             Element element = (Element) doc.getFirstChild();
 
@@ -222,7 +224,13 @@ public class TableController implements Initializable {
         return null;
     }
 
-    private void refresh(Message message) {
+    /**
+     * Loads the selected message and displays all the information in the lower
+     * section. also updates the "read" status.
+     *
+     * @param message The selected message
+     */
+    private void load(Message message) {
         labelContent.setText(message.getSubject());
         labelDate.setText(message.getReceivedAt().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
         labelFrom.setText(message.getSender().getName() + " (" + message.getSender().getMailAddress() + ")");
@@ -232,20 +240,43 @@ public class TableController implements Initializable {
         }
         labelTo.setText(to.toString());
         area.setText(message.getText());
-        message.setReadStatus(true);
-        saveRead(message);
+        saveRead(message, true);
     }
 
-    private void saveRead(Message message) {
+    /**
+     * Saves the "read" status in the message file.
+     *
+     * @param message The edited message
+     */
+    private void saveRead(Message message, boolean bol) {
         try {
+            System.out.println("Testing...");
+            message.setReadStatus(bol);
             Path path = Paths.get("src/messages/examples/" + message.getId() + ".xml");
             Charset charset = StandardCharsets.UTF_8;
-            
             String content = new String(Files.readAllBytes(path), charset);
-            content = content.replaceAll("<readStatus>false</readStatus>", "<readStatus>true</readStatus>");
+            content = content.replaceAll("<readStatus>.*</readStatus>", "<readStatus>" + bol + "</readStatus>");
             Files.write(path, content.getBytes(charset));
         } catch (IOException ex) {
             Logger.getLogger(TableController.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    /**
+     * Sets some options to the TextArea.
+     */
+    private void modifyTextArea() {
+        area.setWrapText(true);
+        area.setEditable(false);
+    }
+
+    /**
+     * Creates the ContextMenu for the table.
+     */
+    private void setContextMenu() {
+        MenuItem item = new MenuItem("mark as unread");
+        item.setOnAction((e) -> saveRead(table.getSelectionModel().getSelectedItem(), false));
+        ContextMenu menu = new ContextMenu(item);
+        table.setContextMenu(menu);
     }
 }
