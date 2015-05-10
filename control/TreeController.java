@@ -9,6 +9,10 @@ import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
+/**
+ *
+ * @author X3phiroth
+ */
 public class TreeController implements Initializable{
 
     @FXML

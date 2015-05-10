@@ -2,13 +2,16 @@ package messages;
 
 import javafx.beans.property.*;
 
+import javax.xml.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Benjamin Haupt on 26.03.15.
+ * Edited by X3phiroth on 10.05.15.
  */
+@XmlRootElement(name = "message")
 public class Message {
 
     private String id;
@@ -18,6 +21,7 @@ public class Message {
     private ObjectProperty<MessageStakeholder> sender;
     private StringProperty subject;
     private StringProperty text;
+
     private List<MessageStakeholder> recipients;
 
     public Message() {
@@ -30,15 +34,15 @@ public class Message {
         this.recipients = new ArrayList<>();
     }
 
-    public Message(MessageImportance importanceOfMessage,LocalDateTime receivedAt,Boolean readStatus,MessageStakeholder sender,String subject){
-    	this();
-    	this.importanceOfMessage.set(importanceOfMessage);
-    	this.subject.set(subject);
-    	this.readStatus.set(readStatus);
-    	this.sender.set(sender);
-    	this.receivedAt.set(receivedAt);
+    public Message(MessageImportance importanceOfMessage, LocalDateTime receivedAt, Boolean readStatus, MessageStakeholder sender, String subject) {
+        this();
+        this.importanceOfMessage.set(importanceOfMessage);
+        this.subject.set(subject);
+        this.readStatus.set(readStatus);
+        this.sender.set(sender);
+        this.receivedAt.set(receivedAt);
     }
-    
+
     public void setId(String id) {
         this.id = id;
     }
@@ -119,6 +123,8 @@ public class Message {
         return this.text.get();
     }
 
+    @XmlElementWrapper(name = "recipients")
+    @XmlElement(name = "recipient")
     public List<MessageStakeholder> getRecipients() {
         return recipients;
     }

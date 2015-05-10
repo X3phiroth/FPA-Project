@@ -36,6 +36,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+/**
+ *
+ * @author X3phiroth
+ */
 public class TableController implements Initializable {
 
     private ObservableList<Message> table_Content;

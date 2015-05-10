@@ -11,11 +11,13 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.MenuItem;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+/**
+ *
+ * @author X3phiroth
+ */
 public class RootController implements Initializable {
 
     @FXML
@@ -54,7 +56,6 @@ public class RootController implements Initializable {
             Stage stage = new Stage(StageStyle.UTILITY);
             stage.setTitle("About");
             stage.setResizable(false);
-//            ImageView view = new ImageView(new Image("images/icon.png"));
             Parent parent = FXMLLoader.load(getClass().getResource("../view/about.fxml"));
             Scene scene = new Scene(parent);
             stage.setScene(scene);
