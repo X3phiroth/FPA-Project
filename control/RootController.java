@@ -8,9 +8,10 @@ import java.util.logging.Logger;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -56,8 +57,18 @@ public class RootController implements Initializable {
             Stage stage = new Stage(StageStyle.UTILITY);
             stage.setTitle("About");
             stage.setResizable(false);
-            Parent parent = FXMLLoader.load(getClass().getResource("../view/about.fxml"));
-            Scene scene = new Scene(parent);
+            Pane pane = FXMLLoader.load(getClass().getResource("../view/about.fxml"));
+            Button button = new Button("OK");
+            button.setStyle("-fx-padding: 8 25 8 25");
+            button.setLayoutX(300);
+            button.setLayoutY(200);
+            button.setOnAction((e) -> {
+                System.out.println("Testing");
+                Stage temp = (Stage) button.getScene().getWindow();
+                temp.close();
+            });
+            pane.getChildren().add(button);
+            Scene scene = new Scene(pane);
             stage.setScene(scene);
             stage.show();
         } catch (IOException ex) {

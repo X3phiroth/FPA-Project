@@ -20,10 +20,16 @@ public class TreeController implements Initializable{
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        TreeItem<String> root = new TreeItem<>("Folder", new ImageView(new Image("images/folder.png")));
+        ImageView view = new ImageView(new Image("images/folder.png"));
+        view.setFitHeight(25.0);
+        view.setFitWidth(25.0);
+        TreeItem<String> root = new TreeItem<>("Folder", view);
         
         for(int i = 1; i < 6; ++i) {
-            root.getChildren().add(new TreeItem<>("Subfolder " + i, new ImageView(new Image("images/folder.png"))));
+            view = new ImageView(new Image("images/folder.png"));
+            view.setFitHeight(25.0);
+            view.setFitWidth(25.0);
+            root.getChildren().add(new TreeItem<>("Subfolder " + i, view));
         }
         root.setExpanded(true);
         treeView.setRoot(root);

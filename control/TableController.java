@@ -1,16 +1,9 @@
 package control;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,12 +22,25 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 import messages.*;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+////   Was for the old saveMessage() method..
+//import java.io.IOException;
+//import java.nio.charset.Charset;
+//import java.nio.charset.StandardCharsets;
+//import java.nio.file.Files;
+//import java.nio.file.Path;
+//import java.nio.file.Paths;
+////   Was for the old readMessage() method..
+//import javax.xml.parsers.DocumentBuilderFactory;
+//import org.w3c.dom.Document;
+//import org.w3c.dom.Element;
+//import org.w3c.dom.Node;
+//import org.w3c.dom.NodeList;
+//import java.util.ArrayList;
 
 /**
  *
@@ -77,56 +83,48 @@ public class TableController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         table_Content = FXCollections.observableArrayList();
-        table.getSelectionModel().selectedItemProperty().addListener((ObservableValue, oldValue, newValue) -> load(newValue));
+        // Changes the read status
+        table.getSelectionModel().selectedItemProperty().addListener((ObservableValue, oldValue, newValue) -> {
+            newValue.setReadStatus(true);
+            load(newValue);    
+        });
         initTable();
+        //Hard set default path
         fillTable("src/messages/examples");
-        modifyTextArea();
         setContextMenu();
+        modifyTextArea();
     }
 
     /**
      * Initializes the TableView
      */
     private void initTable() {
-
-        table_Read.setCellValueFactory(new PropertyValueFactory<>("readStatus"));
-        table_Read.setCellFactory(column -> new TableCell<Message, Boolean>() {
+        table_Prio.setStyle("-fx-alignment: center;");
+        table_Prio.setCellValueFactory(new PropertyValueFactory<>("importanceOfMessage"));
+        table_Prio.setCellFactory(column -> new TableCell<Message, MessageImportance>() {
             @Override
-            protected void updateItem(Boolean readStatus, boolean empty) {
-                super.updateItem(readStatus, empty);
-                if (readStatus == null || empty) {
+            protected void updateItem(MessageImportance importanceOfMessage, boolean empty) {
+                super.updateItem(importanceOfMessage, empty);
+                if (importanceOfMessage == null || empty) {
                     setText(null);
-                    setStyle("");
                 } else {
-                    ImageView imageView = new ImageView();
-                    Image priorityImage;
-                    imageView.setFitWidth(15.0);
-                    imageView.setFitHeight(15.0);
-                    if (readStatus) {
-                        priorityImage = new Image("images/erfolgreich_icon.jpg.png");
-                    } else {
-                        priorityImage = new Image("images/x_button.jpg.png");
+                    ImageView view = new ImageView();
+                    view.setFitWidth(18.0);
+                    view.setFitHeight(18.0);
+                    if (MessageImportance.LOW.equals(importanceOfMessage)) {
+                        view.setImage(new Image("images/arrow_yellow.png"));
                     }
-                    imageView.setImage(priorityImage);
-                    setGraphic(imageView);
+                    if (MessageImportance.NORMAL.equals(importanceOfMessage)) {
+                        view.setImage(new Image("images/arrow_green.png"));
+                    }
+                    if (MessageImportance.HIGH.equals(importanceOfMessage)) {
+                        view.setImage(new Image("images/arrow_red.png"));
+                    }
+                    setGraphic(view);
                 }
             }
         });
-        table_Sender.setCellValueFactory(new PropertyValueFactory<>("sender"));
-        table_Sender.setCellFactory(column -> new TableCell<Message, MessageStakeholder>() {
-            @Override
-            protected void updateItem(MessageStakeholder sender, boolean empty) {
-                super.updateItem(sender, empty);
 
-                if (sender == null || empty) {
-                    setText(null);
-                    setStyle("");
-                } else {
-                    setText(sender.getMailAddress());
-                }
-            }
-        });
-        table_Subject.setCellValueFactory(new PropertyValueFactory<>("subject"));
         table_Rec.setCellValueFactory(new PropertyValueFactory<>("receivedAt"));
         table_Rec.setCellFactory(column -> new TableCell<Message, LocalDateTime>() {
             @Override
@@ -141,33 +139,41 @@ public class TableController implements Initializable {
                 }
             }
         });
-        table_Prio.setCellValueFactory(new PropertyValueFactory<>("importanceOfMessage"));
-        table_Prio.setCellFactory(column -> new TableCell<Message, MessageImportance>() {
+
+        table_Read.setStyle("-fx-alignment: center;");
+        table_Read.setCellValueFactory(new PropertyValueFactory<>("readStatus"));
+        table_Read.setCellFactory(column -> new TableCell<Message, Boolean>() {
             @Override
-            protected void updateItem(MessageImportance importanceOfMessage, boolean empty) {
-                super.updateItem(importanceOfMessage, empty);
-                if (importanceOfMessage == null || empty) {
+            protected void updateItem(Boolean readStatus, boolean empty) {
+                if (readStatus == null || empty) {
                     setText(null);
-                    setStyle("");
                 } else {
-                    ImageView imageView = new ImageView();
-                    Image priorityImage = null;
-                    imageView.setFitWidth(15.0);
-                    imageView.setFitHeight(15.0);
-                    if (MessageImportance.LOW.equals(importanceOfMessage)) {
-                        priorityImage = new Image("images/pfeil_gelb.jpg");
+                    ImageView view = new ImageView();
+                    view.setFitWidth(18.0);
+                    view.setFitHeight(18.0);
+                    if (readStatus) {
+                        view.setImage(new Image("images/tick_green.png"));
+                    } else {
+                        view.setImage(new Image("images/cross_red.png"));
                     }
-                    if (MessageImportance.NORMAL.equals(importanceOfMessage)) {
-                        priorityImage = new Image("images/pfeil_gruen_rechts.jpg");
-                    }
-                    if (MessageImportance.HIGH.equals(importanceOfMessage)) {
-                        priorityImage = new Image("images/pfeilrot.jpg.png");
-                    }
-                    imageView.setImage(priorityImage);
-                    setGraphic(imageView);
+                    setGraphic(view);
                 }
             }
         });
+
+        table_Sender.setCellValueFactory(new PropertyValueFactory<>("sender"));
+        table_Sender.setCellFactory(column -> new TableCell<Message, MessageStakeholder>() {
+            @Override
+            protected void updateItem(MessageStakeholder sender, boolean empty) {
+                if (sender == null || empty) {
+                    setText(null);
+                } else {
+                    setText(sender.getMailAddress());
+                }
+            }
+        });
+
+        table_Subject.setCellValueFactory(new PropertyValueFactory<>("subject"));
     }
 
     /**
@@ -184,48 +190,25 @@ public class TableController implements Initializable {
     }
 
     /**
-     * Opens the xml file, reads all the information and returns a new message
-     * object.
-     *
-     * @param file The file to read
-     * @return The created message
+     * Creates the ContextMenu for the table.
      */
-    private Message readMessage(File file) {
-        try {
-            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file);
+    private void setContextMenu() {
+        MenuItem item = new MenuItem("mark as unread");
+        item.setOnAction((e) -> {
+            Message temp = table.getSelectionModel().getSelectedItem();
+            temp.setReadStatus(false);
+            saveMessage(temp);
+        });
+        ContextMenu menu = new ContextMenu(item);
+        table.setContextMenu(menu);
+    }
 
-            Element element = (Element) doc.getFirstChild();
-
-            String id = element.getElementsByTagName("id").item(0).getTextContent();
-            MessageImportance importance = MessageImportance.valueOf(element.getElementsByTagName("importanceOfMessage").item(0).getTextContent());
-            boolean read = Boolean.parseBoolean(element.getElementsByTagName("readStatus").item(0).getTextContent());
-            LocalDateTime date = LocalDateTime.parse(element.getElementsByTagName("receivedAt").item(0).getTextContent());
-            ArrayList<MessageStakeholder> recipients = new ArrayList<>();
-            NodeList list = element.getElementsByTagName("recipients");
-            for (int i = 0; i < list.getLength(); ++i) {
-                Node recipient = list.item(i);
-                Element temp = (Element) recipient;
-                recipients.add(new MessageStakeholder(
-                        temp.getElementsByTagName("name").item(0).getTextContent(),
-                        temp.getElementsByTagName("mailAddress").item(0).getTextContent()));
-            }
-            list = element.getElementsByTagName("sender");
-            Element eSender = (Element) list.item(0);
-            MessageStakeholder sender = new MessageStakeholder(
-                    eSender.getElementsByTagName("name").item(0).getTextContent(),
-                    eSender.getElementsByTagName("mailAddress").item(0).getTextContent());
-            String subject = element.getElementsByTagName("subject").item(0).getTextContent();
-            String text = element.getElementsByTagName("text").item(0).getTextContent();
-
-            Message message = new Message(importance, date, read, sender, subject);
-            message.setRecipients(recipients);
-            message.setText(text);
-            message.setId(id);
-            return message;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+    /**
+     * Sets some options to the TextArea.
+     */
+    private void modifyTextArea() {
+        area.setWrapText(true);
+        area.setEditable(false);
     }
 
     /**
@@ -244,7 +227,25 @@ public class TableController implements Initializable {
         }
         labelTo.setText(to.toString());
         area.setText(message.getText());
-        saveRead(message, true);
+        saveMessage(message);
+    }
+
+    /**
+     * Opens the xml file, reads all the information and returns a new message
+     * object.
+     * 
+     * @param file The passed xml file
+     * @return The resulting Message object
+     */
+    private Message readMessage(File file) {
+        try {
+            JAXBContext jc = JAXBContext.newInstance(Message.class);
+            Unmarshaller um = jc.createUnmarshaller();
+            return (Message) um.unmarshal(file);
+        } catch (JAXBException ex) {
+            Logger.getLogger(TableController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 
     /**
@@ -252,35 +253,84 @@ public class TableController implements Initializable {
      *
      * @param message The edited message
      */
-    private void saveRead(Message message, boolean bol) {
+    private void saveMessage(Message message) {
         try {
-            System.out.println("Testing...");
-            message.setReadStatus(bol);
-            Path path = Paths.get("src/messages/examples/" + message.getId() + ".xml");
-            Charset charset = StandardCharsets.UTF_8;
-            String content = new String(Files.readAllBytes(path), charset);
-            content = content.replaceAll("<readStatus>.*</readStatus>", "<readStatus>" + bol + "</readStatus>");
-            Files.write(path, content.getBytes(charset));
-        } catch (IOException ex) {
-            Logger.getLogger(TableController.class.getName()).log(Level.SEVERE, null, ex);
+//            ID of message = name of the xml file
+            File file = new File("src/messages/examples/" + message.getId() + ".xml");
+            JAXBContext jaxbContext = JAXBContext.newInstance(Message.class);
+            Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+//            For a better format in file
+            jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            jaxbMarshaller.marshal(message, file);
+            //Just for output in console
+//            jaxbMarshaller.marshal(message, System.out); 
+        } catch (JAXBException e) {
+            e.printStackTrace();
         }
     }
 
-    /**
-     * Sets some options to the TextArea.
-     */
-    private void modifyTextArea() {
-        area.setWrapText(true);
-        area.setEditable(false);
-    }
-
-    /**
-     * Creates the ContextMenu for the table.
-     */
-    private void setContextMenu() {
-        MenuItem item = new MenuItem("mark as unread");
-        item.setOnAction((e) -> saveRead(table.getSelectionModel().getSelectedItem(), false));
-        ContextMenu menu = new ContextMenu(item);
-        table.setContextMenu(menu);
-    }
+// Old Version of my reading message method
+//    /**
+//     * Opens the xml file, reads all the information and returns a new message
+//     * object.
+//     *
+//     * @param file The file to read
+//     * @return The created message
+//     */
+//    private Message readMessage(File file) {
+//        try {
+//            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file);
+//
+//            Element element = (Element) doc.getFirstChild();
+//
+//            String id = element.getElementsByTagName("id").item(0).getTextContent();
+//            MessageImportance importance = MessageImportance.valueOf(element.getElementsByTagName("importanceOfMessage").item(0).getTextContent());
+//            boolean read = Boolean.parseBoolean(element.getElementsByTagName("readStatus").item(0).getTextContent());
+//            LocalDateTime date = LocalDateTime.parse(element.getElementsByTagName("receivedAt").item(0).getTextContent());
+//            ArrayList<MessageStakeholder> recipients = new ArrayList<>();
+//            NodeList list = element.getElementsByTagName("recipients");
+//            for (int i = 0; i < list.getLength(); ++i) {
+//                Node recipient = list.item(i);
+//                Element temp = (Element) recipient;
+//                recipients.add(new MessageStakeholder(
+//                        temp.getElementsByTagName("name").item(0).getTextContent(),
+//                        temp.getElementsByTagName("mailAddress").item(0).getTextContent()));
+//            }
+//            list = element.getElementsByTagName("sender");
+//            Element eSender = (Element) list.item(0);
+//            MessageStakeholder sender = new MessageStakeholder(
+//                    eSender.getElementsByTagName("name").item(0).getTextContent(),
+//                    eSender.getElementsByTagName("mailAddress").item(0).getTextContent());
+//            String subject = element.getElementsByTagName("subject").item(0).getTextContent();
+//            String text = element.getElementsByTagName("text").item(0).getTextContent();
+//
+//            Message message = new Message(importance, date, read, sender, subject);
+//            message.setRecipients(recipients);
+//            message.setText(text);
+//            message.setId(id);
+//            return message;
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return null;
+//    }
+// Old Version of my saving message method
+//     /**
+//     * Saves the "read" status in the message file.
+//     *
+//     * @param message The edited message
+//     */
+//    private void saveRead(Message message, boolean bol) {
+//        try {
+//            System.out.println("Testing...");
+//            message.setReadStatus(bol);
+//            Path path = Paths.get("src/messages/examples/" + message.getId() + ".xml");
+//            Charset charset = StandardCharsets.UTF_8;
+//            String content = new String(Files.readAllBytes(path), charset);
+//            content = content.replaceAll("<readStatus>.*</readStatus>", "<readStatus>" + bol + "</readStatus>");
+//            Files.write(path, content.getBytes(charset));
+//        } catch (IOException ex) {
+//            Logger.getLogger(TableController.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//    }
 }
