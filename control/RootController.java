@@ -63,7 +63,6 @@ public class RootController implements Initializable {
             button.setLayoutX(300);
             button.setLayoutY(200);
             button.setOnAction((e) -> {
-                System.out.println("Testing");
                 Stage temp = (Stage) button.getScene().getWindow();
                 temp.close();
             });
