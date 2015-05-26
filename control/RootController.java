@@ -45,6 +45,11 @@ public class RootController implements Initializable {
 
     private void setBasePath() {
         System.out.println("Set base path...");
+//        Stage stage = new Stage();
+//        stage.setTitle("Base Path");
+//        stage.setResizable(false);
+        
+        
     }
 
     private void setFilter() {

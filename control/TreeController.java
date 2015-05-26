@@ -1,5 +1,6 @@
 package control;
 
+import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.fxml.FXML;
@@ -17,9 +18,12 @@ public class TreeController implements Initializable{
 
     @FXML
     private TreeView<String> treeView;
+    
+    private File basePath;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+//        basePath = new File("");
         ImageView view = new ImageView(new Image("images/folder.png"));
         view.setFitHeight(25.0);
         view.setFitWidth(25.0);

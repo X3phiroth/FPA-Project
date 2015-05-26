@@ -92,6 +92,7 @@ public class TableController implements Initializable {
         //Hard set default path
         fillTable("src/messages/examples");
         setContextMenu();
+        initButtons();
         modifyTextArea();
     }
 
@@ -222,7 +223,7 @@ public class TableController implements Initializable {
         labelDate.setText(message.getReceivedAt().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
         labelFrom.setText(message.getSender().getName() + " (" + message.getSender().getMailAddress() + ")");
         StringBuilder to = new StringBuilder(message.getRecipients().get(0).getMailAddress());
-        for (int i = 0; i < message.getRecipients().size(); ++i) {
+        for (int i = 1; i < message.getRecipients().size(); ++i) {
             to.append(", ").append(message.getRecipients().get(i).getMailAddress());
         }
         labelTo.setText(to.toString());
@@ -262,7 +263,7 @@ public class TableController implements Initializable {
 //            For a better format in file
             jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
             jaxbMarshaller.marshal(message, file);
-            //Just for output in console
+//            Just for output in console
 //            jaxbMarshaller.marshal(message, System.out); 
         } catch (JAXBException e) {
             e.printStackTrace();
@@ -333,4 +334,22 @@ public class TableController implements Initializable {
 //            Logger.getLogger(TableController.class.getName()).log(Level.SEVERE, null, ex);
 //        }
 //    }
+      
+    private void initButtons() {
+        reply.setOnAction((e) -> reply());
+        replyAll.setOnAction((e) -> replyAll());
+        forward.setOnAction((e) -> forward());
+    }
+
+    private void reply() {
+        System.out.println("Reply to sender...");
+    }
+
+    private void replyAll() {
+        System.out.println("Reply to all...");
+    }
+
+    private void forward() {
+        System.out.println("Forward this to...");
+    }
 }
