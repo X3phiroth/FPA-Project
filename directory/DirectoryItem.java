@@ -1,10 +1,8 @@
 package directory;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.TreeItem;
 
 /**
  *
@@ -18,11 +16,12 @@ public class DirectoryItem extends AbstractItem{
     
     @Override
     public ObservableList getChildren() {
-        List<File> list = new Arra<File>();
+        ObservableList<File> list = FXCollections.observableList(null);
         for (File temp : file.listFiles()) {
             if (temp.isDirectory()) {
-                list.add(temp)
+                list.add(temp);
             }
         }
+        return list;
     }
 }
