@@ -183,6 +183,7 @@ public class TableController implements Initializable {
      * @param path the path containing the xml files.
      */
     private void fillTable(String path) {
+        table_Content.clear();
         File file = new File(path);
         for (File each : file.listFiles()) {
             table_Content.add(readMessage(each));
@@ -239,12 +240,14 @@ public class TableController implements Initializable {
      * @return The resulting Message object
      */
     private Message readMessage(File file) {
-        try {
-            JAXBContext jc = JAXBContext.newInstance(Message.class);
-            Unmarshaller um = jc.createUnmarshaller();
-            return (Message) um.unmarshal(file);
-        } catch (JAXBException ex) {
-            Logger.getLogger(TableController.class.getName()).log(Level.SEVERE, null, ex);
+        if (file.isFile()) {
+            try {
+                JAXBContext jc = JAXBContext.newInstance(Message.class);
+                Unmarshaller um = jc.createUnmarshaller();
+                return (Message) um.unmarshal(file);
+            } catch (JAXBException ex) {
+                Logger.getLogger(TableController.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         return null;
     }

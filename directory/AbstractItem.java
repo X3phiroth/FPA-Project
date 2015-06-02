@@ -6,6 +6,8 @@
 package directory;
 
 import java.io.File;
+import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.control.TreeItem;
 
 /**
@@ -18,6 +20,11 @@ public class AbstractItem extends TreeItem {
     
     public AbstractItem(File file) {
         super(file.getName());
+        this.file = file;
+    }
+    
+    public AbstractItem(File file, Node node) {
+        super(file.getName(), node);
         this.file = file;
     }
 }
