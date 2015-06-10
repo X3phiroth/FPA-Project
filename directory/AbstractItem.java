@@ -6,7 +6,6 @@
 package directory;
 
 import java.io.File;
-import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.TreeItem;
 
@@ -26,5 +25,19 @@ public class AbstractItem extends TreeItem {
     public AbstractItem(File file, Node node) {
         super(file.getName(), node);
         this.file = file;
+    }
+    
+    @Override
+    public boolean isLeaf() {
+        for (File thisFile : file.listFiles()) {
+            if (thisFile.isDirectory()) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    public File getFile() {
+        return file;
     }
 }

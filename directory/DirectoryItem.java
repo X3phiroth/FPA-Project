@@ -1,10 +1,6 @@
 package directory;
 
 import java.io.File;
-import java.util.ArrayList;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
@@ -16,18 +12,15 @@ public class DirectoryItem extends AbstractItem {
 
     public DirectoryItem(File file) {
         super(file, new ImageView(new Image("images/folder2.png")));
-        getChildren();
+        init();
     }
 
-    @Override
-    public ObservableList getChildren() {
-        ObservableList list = super.getChildren();
-        list.clear();
-        for (File temp : file.listFiles()) {
-            if (temp.isDirectory()) {
-                list.add(new DirectoryItem(temp));
+    public final void init() {
+        for (File fileItem : file.listFiles()) {
+            if (fileItem.isDirectory()) {
+                DirectoryItem item = new DirectoryItem(fileItem);
+                getChildren().add(item);
             }
         }
-        return list;
     }
 }

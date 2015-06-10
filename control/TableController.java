@@ -1,9 +1,12 @@
 package control;
 
+import directory.DirectoryItem;
 import java.io.File;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,6 +22,8 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -27,26 +32,13 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import messages.*;
-////   Was for the old saveMessage() method..
-//import java.io.IOException;
-//import java.nio.charset.Charset;
-//import java.nio.charset.StandardCharsets;
-//import java.nio.file.Files;
-//import java.nio.file.Path;
-//import java.nio.file.Paths;
-////   Was for the old readMessage() method..
-//import javax.xml.parsers.DocumentBuilderFactory;
-//import org.w3c.dom.Document;
-//import org.w3c.dom.Element;
-//import org.w3c.dom.Node;
-//import org.w3c.dom.NodeList;
-//import java.util.ArrayList;
+import util.FolderSelectionObservable;
 
 /**
  *
  * @author X3phiroth
  */
-public class TableController implements Initializable {
+public class TableController implements Initializable, Observer {
 
     private ObservableList<Message> table_Content;
     @FXML
@@ -94,6 +86,25 @@ public class TableController implements Initializable {
         setContextMenu();
         initButtons();
         modifyTextArea();
+        FolderSelectionObservable.getInstance(null).addObserver(this);
+    }
+    
+    @Override
+    public void update(Observable o, Object arg) {
+        TreeView<DirectoryItem> treeView = (TreeView<DirectoryItem>) arg;
+        TreeItem<DirectoryItem> treeItem = treeView.getSelectionModel().getSelectedItem();
+        DirectoryItem item = (DirectoryItem) treeItem;
+        
+        clearDetails();
+        fillTable(item.getFile().getPath());
+    }
+    
+    private void clearDetails() {
+        labelTo.setText("");
+        labelFrom.setText("");
+        labelDate.setText("");
+        labelContent.setText("");
+        area.clear();
     }
 
     /**
