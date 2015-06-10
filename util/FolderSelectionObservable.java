@@ -26,7 +26,6 @@ public class FolderSelectionObservable extends Observable {
     }
 
     private void workWithSelected() {
-        treeView.getSelectionModel().getSelectedItem().setExpanded(true);
         setChanged();
         notifyObservers(treeView);
     }

@@ -7,6 +7,7 @@ import java.util.ResourceBundle;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TreeView;
+import util.FolderSelectionObservable;
 
 /**
  *
@@ -26,5 +27,6 @@ public class TreeController implements Initializable{
 //        }
         treeView.setRoot(root);
         root.setExpanded(true);
+        FolderSelectionObservable.getInstance(treeView);
     }
 }

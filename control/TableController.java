@@ -95,6 +95,7 @@ public class TableController implements Initializable, Observer {
         TreeItem<DirectoryItem> treeItem = treeView.getSelectionModel().getSelectedItem();
         DirectoryItem item = (DirectoryItem) treeItem;
         
+        table_Content.removeAll(table_Content);
         clearDetails();
         fillTable(item.getFile().getPath());
     }
