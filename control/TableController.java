@@ -5,6 +5,7 @@ import java.io.File;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.ResourceBundle;
@@ -72,34 +73,37 @@ public class TableController implements Initializable, Observer {
     @FXML
     private TextArea area;
 
+    private String selectedFolder;
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         table_Content = FXCollections.observableArrayList();
         // Changes the read status
         table.getSelectionModel().selectedItemProperty().addListener((ObservableValue, oldValue, newValue) -> {
-            newValue.setReadStatus(true);
-            load(newValue);    
+            if (newValue != null) {
+                newValue.setReadStatus(true);
+                load(newValue);
+            }
         });
         initTable();
+        table.setItems(table_Content);
         //Hard set default path
-        fillTable("src/messages/examples");
+        selectedFolder = "src/messages/examples";
         setContextMenu();
         initButtons();
         modifyTextArea();
         FolderSelectionObservable.getInstance(null).addObserver(this);
     }
-    
+
     @Override
     public void update(Observable o, Object arg) {
         TreeView<DirectoryItem> treeView = (TreeView<DirectoryItem>) arg;
-        TreeItem<DirectoryItem> treeItem = treeView.getSelectionModel().getSelectedItem();
-        DirectoryItem item = (DirectoryItem) treeItem;
-        
-        table_Content.removeAll(table_Content);
+        DirectoryItem item = (DirectoryItem) treeView.getSelectionModel().getSelectedItem();
+
         clearDetails();
         fillTable(item.getFile().getPath());
     }
-    
+
     private void clearDetails() {
         labelTo.setText("");
         labelFrom.setText("");
@@ -197,10 +201,18 @@ public class TableController implements Initializable, Observer {
     private void fillTable(String path) {
         table_Content.clear();
         File file = new File(path);
+        System.out.println(path);
+//        table_Content.add(readMessage(file.listFiles()[0]));
+        System.out.println(file.listFiles().length);
+        ArrayList<Message> list = new ArrayList<>();
         for (File each : file.listFiles()) {
-            table_Content.add(readMessage(each));
+            if (each.isFile()) {
+//                table_Content.add(readMessage(each));
+                list.add(readMessage(each));
+                System.out.println(each.getName());
+            }
         }
-        table.setItems(table_Content);
+        table_Content.addAll(list);
     }
 
     /**
@@ -247,7 +259,7 @@ public class TableController implements Initializable, Observer {
     /**
      * Opens the xml file, reads all the information and returns a new message
      * object.
-     * 
+     *
      * @param file The passed xml file
      * @return The resulting Message object
      */
@@ -272,7 +284,7 @@ public class TableController implements Initializable, Observer {
     private void saveMessage(Message message) {
         try {
 //            ID of message = name of the xml file
-            File file = new File("src/messages/examples/" + message.getId() + ".xml");
+            File file = new File(selectedFolder + "/" + message.getId() + ".xml");
             JAXBContext jaxbContext = JAXBContext.newInstance(Message.class);
             Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
 //            For a better format in file
@@ -349,7 +361,6 @@ public class TableController implements Initializable, Observer {
 //            Logger.getLogger(TableController.class.getName()).log(Level.SEVERE, null, ex);
 //        }
 //    }
-      
     private void initButtons() {
         reply.setOnAction((e) -> reply());
         replyAll.setOnAction((e) -> replyAll());
