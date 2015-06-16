@@ -23,7 +23,6 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
@@ -101,7 +100,8 @@ public class TableController implements Initializable, Observer {
         DirectoryItem item = (DirectoryItem) treeView.getSelectionModel().getSelectedItem();
 
         clearDetails();
-        fillTable(item.getFile().getPath());
+        selectedFolder = item.getFile().getPath();
+        fillTable(selectedFolder);
     }
 
     private void clearDetails() {
@@ -122,10 +122,10 @@ public class TableController implements Initializable, Observer {
             @Override
             protected void updateItem(MessageImportance importanceOfMessage, boolean empty) {
                 super.updateItem(importanceOfMessage, empty);
+                ImageView view = new ImageView();
                 if (importanceOfMessage == null || empty) {
                     setText(null);
                 } else {
-                    ImageView view = new ImageView();
                     view.setFitWidth(18.0);
                     view.setFitHeight(18.0);
                     if (MessageImportance.LOW.equals(importanceOfMessage)) {
@@ -139,6 +139,7 @@ public class TableController implements Initializable, Observer {
                     }
                     setGraphic(view);
                 }
+                setGraphic(view);
             }
         });
 
@@ -162,10 +163,11 @@ public class TableController implements Initializable, Observer {
         table_Read.setCellFactory(column -> new TableCell<Message, Boolean>() {
             @Override
             protected void updateItem(Boolean readStatus, boolean empty) {
+                super.updateItem(readStatus, empty);
+                ImageView view = new ImageView();
                 if (readStatus == null || empty) {
                     setText(null);
                 } else {
-                    ImageView view = new ImageView();
                     view.setFitWidth(18.0);
                     view.setFitHeight(18.0);
                     if (readStatus) {
@@ -173,8 +175,8 @@ public class TableController implements Initializable, Observer {
                     } else {
                         view.setImage(new Image("images/cross_red.png"));
                     }
-                    setGraphic(view);
                 }
+                setGraphic(view);
             }
         });
 
@@ -201,18 +203,11 @@ public class TableController implements Initializable, Observer {
     private void fillTable(String path) {
         table_Content.clear();
         File file = new File(path);
-        System.out.println(path);
-//        table_Content.add(readMessage(file.listFiles()[0]));
-        System.out.println(file.listFiles().length);
-        ArrayList<Message> list = new ArrayList<>();
         for (File each : file.listFiles()) {
-            if (each.isFile()) {
-//                table_Content.add(readMessage(each));
-                list.add(readMessage(each));
-                System.out.println(each.getName());
+            if (each != null && each.isFile() && each.getName().endsWith(".xml")) {
+                table_Content.add(readMessageFile(each));
             }
         }
-        table_Content.addAll(list);
     }
 
     /**
@@ -263,7 +258,7 @@ public class TableController implements Initializable, Observer {
      * @param file The passed xml file
      * @return The resulting Message object
      */
-    private Message readMessage(File file) {
+    private Message readMessageFile(File file) {
         if (file.isFile()) {
             try {
                 JAXBContext jc = JAXBContext.newInstance(Message.class);
