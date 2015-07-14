@@ -1,6 +1,9 @@
 package control;
 
+import directory.ContainsSenderMailFilter;
 import directory.DirectoryItem;
+import directory.FpaMessageLoader;
+import directory.IsSubjectFilter;
 import java.io.File;
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -88,6 +91,7 @@ public class TableController implements Initializable, Observer {
         table.setItems(table_Content);
         //Hard set default path
         selectedFolder = "src/messages/examples";
+        fillTable(selectedFolder);
         setContextMenu();
         initButtons();
         modifyTextArea();
@@ -95,8 +99,8 @@ public class TableController implements Initializable, Observer {
     }
 
     @Override
-    public void update(Observable o, Object arg) {
-        TreeView<DirectoryItem> treeView = (TreeView<DirectoryItem>) arg;
+    public void update(Observable o, Object object) {
+        TreeView<DirectoryItem> treeView = (TreeView<DirectoryItem>) object;
         DirectoryItem item = (DirectoryItem) treeView.getSelectionModel().getSelectedItem();
 
         clearDetails();
@@ -137,7 +141,6 @@ public class TableController implements Initializable, Observer {
                     if (MessageImportance.HIGH.equals(importanceOfMessage)) {
                         view.setImage(new Image("images/arrow_red.png"));
                     }
-                    setGraphic(view);
                 }
                 setGraphic(view);
             }
@@ -202,6 +205,8 @@ public class TableController implements Initializable, Observer {
      */
     private void fillTable(String path) {
         table_Content.clear();
+//        table_Content.addAll(new IsSubjectFilter(new FpaMessageLoader(), "XING-Profil").filterMessages(path));
+//        table_Content.addAll(new ContainsSenderMailFilter(new FpaMessageLoader(), "netflix").filterMessages(path));
         File file = new File(path);
         for (File each : file.listFiles()) {
             if (each != null && each.isFile() && each.getName().endsWith(".xml")) {
@@ -221,6 +226,14 @@ public class TableController implements Initializable, Observer {
             saveMessage(temp);
         });
         ContextMenu menu = new ContextMenu(item);
+        item = new MenuItem("Filter messages");
+        item.setOnAction((e) -> {
+            ArrayList<Message> messages = new ContainsSenderMailFilter(new FpaMessageLoader(), "info").filterMessages(selectedFolder);
+            messages = new IsSubjectFilter(new FpaMessageLoader(), "Ihre Bestellung").filterMessages(messages);
+            table_Content.clear();
+            table_Content.addAll(messages);
+        });
+        menu.getItems().add(item);
         table.setContextMenu(menu);
     }
 

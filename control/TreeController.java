@@ -13,16 +13,13 @@ import util.FolderSelectionObservable;
  *
  * @author X3phiroth
  */
-public class TreeController implements Initializable{
+public class TreeController implements Initializable {
 
     @FXML
     private TreeView<DirectoryItem> treeView;
-    
-    private File basePath;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-//        basePath = new File("");
         DirectoryItem root = new DirectoryItem(new File("src/messages/examples"));
 //        }
         treeView.setRoot(root);
